@@ -15,6 +15,8 @@ The additional packages used are:
 ## Computing weight maps
  To precompute shape aware weight maps use `createwm/test.py` script. Change `path_images` variable to indicate the ground truth path. Images are assumed to have png extensions (line 26).
 
+![alt text](readme_img/WCE.png)
+
 ## Data preparation
 Your own dataset can be used for network training. Training datasets must be defined in `src/defaults/dataconfig_train.json`. For every entry in `dataconfig_train.json` must be an entry with the same key in `src/defaults/dataconfig_test.json` for validation dataset specifications. More information about defaults definitions can be see in [netframework](https://github.com/fagp/netframework). 
 
