@@ -48,5 +48,5 @@ A sequence of experiments defined in `experiments/experiments.param` will be exe
 - `--lossparam`: Loss function parameters
 - `--resume`: Use it to resume training
 
-
+![alt text](readme_img/visdom.png)
 
