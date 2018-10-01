@@ -1,0 +1,21 @@
+{
+  "unet_3":
+  {
+    "arch":"unet",
+    "module": "models.arch.unet",
+    "n_classes":"3",
+    "is_deconv":"False",
+    "in_channels":"3",
+    "is_batchnorm":"False"
+  },
+  "unetresnet_3":
+  {
+    "arch":"unetresnet",
+    "module": "models.arch.unetresnet",
+    "num_classes":"3",
+    "encoder_depth":"34",
+    "is_deconv":"False",
+    "in_channels":"3",
+    "pretrained":"True"
+  }
+}

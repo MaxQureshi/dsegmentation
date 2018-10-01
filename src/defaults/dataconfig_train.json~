@@ -1,0 +1,119 @@
+{
+  "cambia":
+  {
+    "root": "../../data/cambia_wells",
+    "ifolder": "images",
+    "lfolder": "labels3c",
+    "ext": "png",
+    "lext": "png",
+    "load_weight":"True",
+    "wfolder":"unet3",
+    "n_classes":"3",
+    "transform_param": "Rotation(180),RandomFlip(0.5),RandomCrop(400),UnetResize(400),ToTensor(),Warping(10,0.05)",
+    "module":"dataloaders.segdataset"
+  },
+  "cambiacrops":
+  {
+    "root": "../../data/crops",
+    "ifolder": "images",
+    "lfolder": "labels3c",
+    "ext": "png",
+    "lext": "png",
+    "load_weight":"True",
+    "wfolder":"unet3",
+    "n_classes":"3",
+    "transform_param": "Rotation(180),RandomFlip(0.5),UnetResize(514),ToTensor(),Warping(10,0.05)",
+    "module":"dataloaders.segdataset"
+  },
+  "cambiaresnet":
+  {
+    "root": "../../data/cambia_wells",
+    "ifolder": "images",
+    "lfolder": "labels3c",
+    "ext": "png",
+    "lext": "png",
+    "load_weight":"True",
+    "wfolder":"unet3",
+    "n_classes":"3",
+    "transform_param": "Rotation(180),RandomFlip(0.5),RandomCrop(400),UnetResnetResize(256),ToTensor(),Warping(10,0.05)",
+    "module":"dataloaders.segdataset"
+  },
+  "monuseg":
+  {
+    "root": "../../data/MoNuSeg",
+    "ifolder": "images",
+    "lfolder": "labels3c",
+    "ext": "png",
+    "lext": "png",
+    "load_weight":"True",
+    "wfolder":"unet3",
+    "n_classes":"3",
+    "transform_param": "Rotation(180),RandomFlip(0.5),RandomCrop(400),UnetResize(400),ToTensor(),Warping(10,0.05)",
+    "module":"dataloaders.segdataset"
+  },
+  "fluosim":
+  {
+    "root": "../../data/Fluo-N2DH-SIM",
+    "ifolder": "images",
+    "lfolder": "labels3c",
+    "ext": "png",
+    "lext": "png",
+    "load_weight":"True",
+    "wfolder":"unet3",
+    "n_classes":"3",
+    "transform_param": "Rotation(180),RandomFlip(0.5),RandomCrop(400),UnetResize(400),ToTensor(),Warping(10,0.05)",
+    "module":"dataloaders.segdataset"
+  },
+  "isbi2009":
+  {
+    "root": "../../data/isbi2009",
+    "ifolder": "images",
+    "lfolder": "labels3c",
+    "ext": "png",
+    "lext": "png",
+    "load_weight":"True",
+    "wfolder":"unet3",
+    "n_classes":"3",
+    "transform_param": "Rotation(180),RandomFlip(0.5),RandomCrop(400),UnetResize(400),ToTensor(),Warping(10,0.05)",
+    "module":"dataloaders.segdataset"
+  },
+  "kaggle":
+  {
+    "root": "../../data/kaggle",
+    "ifolder": "images",
+    "lfolder": "labels3c",
+    "ext": "png",
+    "lext": "png",
+    "load_weight":"True",
+    "wfolder":"unet3",
+    "n_classes":"3",
+    "transform_param": "Rotation(180),RandomFlip(0.5),RandomCrop(400),UnetResize(400),ToTensor(),Warping(10,0.05)",
+    "module":"dataloaders.segdataset"
+  },
+  "tnbc":
+  {
+    "root": "../../data/TNBC",
+    "ifolder": "images",
+    "lfolder": "labels3c",
+    "ext": "png",
+    "lext": "png",
+    "load_weight":"True",
+    "wfolder":"unet3",
+    "n_classes":"3",
+    "transform_param": "Rotation(180),RandomFlip(0.5),RandomCrop(400),UnetResize(400),ToTensor(),Warping(10,0.05)",
+    "module":"dataloaders.segdataset"
+  },
+  "warnick":
+  {
+    "root": "../../data/warnick",
+    "ifolder": "images",
+    "lfolder": "labels3c",
+    "ext": "png",
+    "lext": "png",
+    "load_weight":"True",
+    "wfolder":"unet3",
+    "n_classes":"3",
+    "transform_param": "Rotation(180),RandomFlip(0.5),RandomCrop(400),UnetResize(400),ToTensor(),Warping(10,0.05)",
+    "module":"dataloaders.segdataset"
+  }
+}

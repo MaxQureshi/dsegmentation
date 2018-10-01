@@ -1,0 +1,208 @@
+import os
+import torch
+import torchvision
+import math
+import numpy as np
+import scipy.misc as m
+from scipy import ndimage
+import skimage.color as skcolor
+import skimage.util as skutl
+from scipy.interpolate import griddata
+from skimage.transform import rotate
+from skimage.transform import resize
+
+from torch.utils import data
+import time
+import itertools
+from .grid_sample import grid_sample
+from torch.autograd import Variable
+from .tps_grid_gen import TPSGridGen
+
+
+#########################################################################################################
+class ToTensor(object):
+
+    def __call__(self, sample):
+        image,label,weight=sample['image'],sample['label'],sample['weight']
+
+        image = np.array((image/255.).transpose((2, 0, 1)))
+        label = np.rint(np.array(label))
+        weight = np.array( (weight) )
+
+        return {'image': torch.from_numpy(image).float(), 'label': torch.from_numpy(label).long(),
+            'weight':torch.from_numpy(weight).float()}
+#########################################################################################################
+class Warping(object):
+
+    def __init__(self, size_grid,deform):
+        self.size_grid = size_grid
+        self.deform = deform
+
+    def __call__(self, sample):
+        size_grid=self.size_grid
+        deforma=self.deform
+        
+        image,label,weight=sample['image'],sample['label'],sample['weight']
+        target_width,target_height=image.size(1),image.size(2)
+
+        target_control_points = torch.Tensor(list(itertools.product(
+            torch.arange(-1.0, 1.00001, 2.0 / (size_grid-1)),
+            torch.arange(-1.0, 1.00001, 2.0 / (size_grid-1)),
+        )))
+        source_control_points = target_control_points + torch.Tensor(target_control_points.size()).uniform_(-deforma, deforma)
+        tps = TPSGridGen(target_height, target_width, target_control_points)
+        source_coordinate = tps(Variable(torch.unsqueeze(source_control_points, 0)))
+        grid = source_coordinate.view(1, target_height, target_width, 2)
+        wimage = grid_sample(torch.unsqueeze(image,0), grid)
+        wlabel = grid_sample(torch.unsqueeze(torch.unsqueeze(label.float(),0),0) , grid).round()
+        wweight = grid_sample(torch.unsqueeze(torch.unsqueeze(weight,0),0) , grid)
+
+        return {'image':wimage.squeeze(0),'label':wlabel.squeeze(0).squeeze(0),'weight':wweight.squeeze(0).squeeze(0)}
+#########################################################################################################
+class Rotation(object):
+   
+    def __init__(self, angle):
+            self.angle = angle
+
+    def __call__(self, sample):
+        image,label,weight=sample['image'],sample['label'],sample['weight']
+
+        h, w = image.shape[:2]
+
+        center = (w//2, h//2)
+        angle_rand = np.random.uniform(-self.angle, self.angle)
+
+        image=rotate(image,angle_rand,mode='reflect',preserve_range=True).astype('uint8')
+        weight=rotate(weight,angle_rand,mode='reflect',preserve_range=True)
+        label=rotate(label,angle_rand,mode='reflect',preserve_range=True).astype('uint8')
+        
+        return {'image':image,'label':label,'weight':weight}
+#########################################################################################################
+class RandomFlip(object):
+   
+    def __init__(self, prob):
+        self.prob = prob
+
+    def __call__(self, sample):
+        image,label,weight=sample['image'],sample['label'],sample['weight']
+       
+        if np.random.rand(1) < self.prob:
+            image = np.fliplr(image)
+            label = np.fliplr(label)
+            weight = np.fliplr(weight)
+
+        return {'image':image,'label':label,'weight':weight}
+#########################################################################################################
+class Pad(object):
+   
+    def __init__(self, pad_size):
+            self.pad_size = pad_size
+
+    def __call__(self, sample):
+        image,label,weight=sample['image'],sample['label'],sample['weight']
+
+        image=np.lib.pad(image,((self.pad_size, self.pad_size), (self.pad_size, self.pad_size), (0,0)), 'constant',constant_values=0)
+        label=np.lib.pad(label,((self.pad_size, self.pad_size), (self.pad_size, self.pad_size) ), 'constant',constant_values=0)
+        weight=np.lib.pad(weight,((self.pad_size, self.pad_size), (self.pad_size, self.pad_size)), 'constant',constant_values=weight[0,0])
+
+        return {'image':image,'label':label,'weight':weight}
+#########################################################################################################
+class RandomCrop(object):
+   
+    def __init__(self, output_size):
+        assert isinstance(output_size, (int, tuple))
+        if isinstance(output_size, int):
+            self.output_size = (output_size, output_size)
+        else:
+            assert len(output_size) == 2
+            self.output_size = output_size
+
+    def __call__(self, sample):
+        image,label,weight=sample['image'],sample['label'],sample['weight']
+        
+        h, w = image.shape[:2]
+        new_h, new_w = self.output_size
+
+        top = np.random.randint(0, h - new_h)
+        left = np.random.randint(0, w - new_w)
+
+        image = image[top: top + new_h,left: left + new_w,:]
+        label = label[top: top + new_h,left: left + new_w]
+        weight = weight[top: top + new_h,left: left + new_w]
+
+        return {'image':image,'label':label,'weight':weight}
+#########################################################################################################
+class UnetResize(object):
+   
+    def __init__(self, output_size):
+        assert isinstance(output_size, (int))
+        if isinstance(output_size, int):
+            self.output_size = output_size
+
+    def __call__(self, sample):
+        image,label,weight=sample['image'],sample['label'],sample['weight']
+
+        height, width = image.shape[:2]
+
+        asp = float(height)/width
+        w = self.output_size
+        h = int(w*asp)
+
+        #resize mantaining aspect ratio
+        image_x = resize(image.copy(), (h,w),preserve_range=True,mode='reflect', order=1).astype('uint8')
+        label_x = np.rint(resize(label.copy(), (h,w), preserve_range=True,mode='reflect',order=1)).astype('uint8')
+        weight_x = resize(weight.copy(), (h,w),preserve_range=True,mode='reflect',order=1)
+
+        image = np.zeros((w,w,3))
+        label = np.zeros((w,w))
+        weight = np.zeros((w,w))
+
+        #crop image
+        ini = int(round((w-h) / 2.0))
+        image[ini:ini+h,:,:] = image_x
+        label[ini:ini+h,:] = label_x
+        weight[ini:ini+h,:] = weight_x
+
+        #unet required input size
+        downsampleFactor = 16
+        d4a_size= 0
+        padInput =   (((d4a_size *2 +2 +2)*2 +2 +2)*2 +2 +2)*2 +2 +2
+        padOutput = ((((d4a_size -2 -2)*2-2 -2)*2-2 -2)*2-2 -2)*2-2 -2
+        d4a_size = math.ceil( (self.output_size - padOutput)/downsampleFactor)
+        input_size = downsampleFactor*d4a_size + padInput
+
+        offset=(input_size-self.output_size)//2
+        image_f = np.zeros((input_size,input_size,3))
+        label_f = np.zeros((input_size,input_size))
+        weight_f = np.zeros((input_size,input_size))
+
+        #crop for required size
+        image_f[offset:-offset,offset:-offset,:]=image
+        label_f[offset:-offset,offset:-offset]=label
+        weight_f[offset:-offset,offset:-offset]=weight
+
+        return {'image':image_f,'label':label_f,'weight':weight_f}
+#########################################################################################################
+class UnetResnetResize(object):
+   
+    def __init__(self, output_size):
+        assert isinstance(output_size, (int))
+        if isinstance(output_size, int):
+            self.output_size = output_size
+
+    def __call__(self, sample):
+        image,label,weight=sample['image'],sample['label'],sample['weight']
+
+        height, width = image.shape[:2]
+
+        asp = float(height)/width
+        w = self.output_size
+        h = self.output_size
+
+        #resize mantaining aspect ratio
+        image_x = resize(image.copy(), (h,w),preserve_range=True,mode='reflect', order=1).astype('uint8')
+        label_x = np.rint(resize(label.copy(), (h,w), preserve_range=True,mode='reflect',order=1)).astype('uint8')
+        weight_x = resize(weight.copy(), (h,w),preserve_range=True,mode='reflect',order=1)
+
+        return {'image':image_x,'label':label_x,'weight':weight_x}
+#########################################################################################################

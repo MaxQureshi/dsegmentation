@@ -1,0 +1,12 @@
+{
+  "accuracy":
+  {
+    "metric":"accuracy",
+    "param":{}
+  },
+ "jaccard":
+  {
+    "metric":"jaccard",
+    "param":{}
+  }
+}

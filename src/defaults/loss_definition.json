@@ -1,0 +1,26 @@
+{
+  "wce":
+  {
+    "criterion":"WeightedCrossEntropy2d",
+    "criterionparam":"{'input':outputs,'target':sample['label'],'weight':sample['weight']}",
+    "module":"loss.lossfunc"
+  },
+  "wfl":
+  {
+    "criterion":"WeightedFocalLoss2d",
+    "criterionparam":"{'input':outputs,'target':sample['label'],'weight':sample['weight']}",
+    "module":"loss.lossfunc"
+  },
+  "accuracy":
+  {
+    "criterion":"Accuracy",
+    "criterionparam":"{'input':outputs,'target':sample['label']}",
+    "module":"loss.lossfunc"
+  },
+  "jaccard":
+  {
+    "criterion":"mAP",
+    "criterionparam":"{'input':outputs,'target':sample['label']}",
+    "module":"loss.lossfunc"
+  }
+}
