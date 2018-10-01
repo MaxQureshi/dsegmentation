@@ -32,9 +32,6 @@ class cdataset(data.Dataset):
 
         img = self.dataprov.getimage(index)
         lbl = self.dataprov.getlabel()
-        lbl[lbl==14]=2
-        lbl[lbl==161]=1
-        lbl[lbl==255]=0
         
         if self.load_weight==True:
             wht = self.weightprov.getweight(index)

@@ -29,10 +29,6 @@ data = imageProvide(path=path_images,ext='png')
 for i in range(len(data.files)):
     print('\n Image '+str(i))
     image=data.getimage(i)
-    image=image[:,:,2]
-    image[image==14]=2
-    image[image==161]=1
-    image[image==255]=0
 
     print('Balance WM 2 classes')
     bwm=balancewm(image==1)
